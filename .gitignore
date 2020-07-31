@@ -2,5 +2,6 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/.vs/SP_Hauler/v15
-/SP_Hauler/obj/Debug/SP_Hauler.csproj.CoreCompileInputs.cache
+/.vs/*
+/SP_Hauler/obj/*
+/SP_Hauler/bin/*

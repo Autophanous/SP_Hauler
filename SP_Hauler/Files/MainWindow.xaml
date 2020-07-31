@@ -104,16 +104,16 @@
 
         <Grid x:Name="FilterChoice" Grid.ColumnSpan="2" Margin="-22,167,-14,0" Visibility="Hidden">
             <Label x:Name="label_Filter" Content="Filter" HorizontalAlignment="Left" VerticalAlignment="Top" FontWeight="Bold" FontSize="15" Margin="431,0,0,0" Height="30" Width="46"/>
-            <RadioButton x:Name="radioButton_Browser" Content="Choose Files and Folders to Copy" HorizontalAlignment="Left" Margin="364,29,0,0" VerticalAlignment="Top" Width="198" Height="16"/>
-            <RadioButton x:Name="radioButton_No_Filter" Content="Copy All" HorizontalAlignment="Left" Margin="293,29,0,0" VerticalAlignment="Top" Width="66" IsChecked="False" Height="16"/>
-            <RadioButton x:Name="radioButton_Filter" Content="Set Filters" HorizontalAlignment="Left" Margin="567,29,0,0" VerticalAlignment="Top" Width="74" Height="16"/>
+            <RadioButton x:Name="radioButton_Browser" Content="Choose Files and Folders to Copy" HorizontalAlignment="Left" Margin="345,29,0,0" VerticalAlignment="Top" Width="198" Height="16"/>
+            <RadioButton x:Name="radioButton_No_Filter" Content="Copy All" HorizontalAlignment="Left" Margin="274,29,0,0" VerticalAlignment="Top" Width="66" IsChecked="False" Height="16"/>
+            <RadioButton x:Name="radioButton_Filter" Content="Set Filters" HorizontalAlignment="Left" Margin="548,29,0,0" VerticalAlignment="Top" Width="74" Height="16"/>
+            <RadioButton x:Name="radioButton_Batch" Content="Batch" HorizontalAlignment="Left" Margin="626,29,0,0" VerticalAlignment="Top" Width="74" Height="16"/>
             <Grid x:Name="grid_Filters" Margin="48,73,0,0" Visibility="Hidden" HorizontalAlignment="Left" Width="804" Height="535" VerticalAlignment="Top">
                 <ComboBox x:Name="comboBox_Field_To_Filter" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="345"/>
                 <ComboBox x:Name="comboBox_Condition" HorizontalAlignment="Left" Margin="350,2,0,0" VerticalAlignment="Top" Width="120"/>
                 <TextBox x:Name="textBox_Filter_Value" HorizontalAlignment="Left" Height="24" Margin="475,0,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="329"/>
                 <Button x:Name="button_DateValidator" Content="Date Validator" HorizontalAlignment="Left" Margin="714,29,0,-27" VerticalAlignment="Top" Width="90" Visibility="Hidden"/>
                 <Button x:Name="button_AddFilter" Content="Add Filter" HorizontalAlignment="Left" Margin="0,29,0,-27" VerticalAlignment="Top" Width="75"/>
-                <Button x:Name="button_Import_FilteredItems_CSV" Content="Import Filtered Items CSV" HorizontalAlignment="Left" Margin="75,427,0,0" VerticalAlignment="Top" Width="234"/>
                 <ListView x:Name="listView_Filters" HorizontalAlignment="Left" Height="311" Margin="0,96,0,0" VerticalAlignment="Top" Width="389">
                     <ListView.View>
                         <GridView>
@@ -121,6 +121,7 @@
                             <GridViewColumn Header="Condition" DisplayMemberBinding ="{Binding Condition}" Width="auto"/>
                             <GridViewColumn Header="Value" DisplayMemberBinding ="{Binding Value}" Width="auto"/>
                             <GridViewColumn Header="Type" DisplayMemberBinding ="{Binding Type}" Width="auto"/>
+                            <GridViewColumn Header="LogicOp" DisplayMemberBinding ="{Binding LogicOp}" Width="auto"/>
                         </GridView>
                     </ListView.View>
                 </ListView>
@@ -194,6 +195,29 @@
                 <Label x:Name="ContentSource" Content="Content of Source" HorizontalAlignment="Left" Margin="-5,0,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="15"/>
                 <Label x:Name="ContentSource_Copy" Content="Items to be Copied" HorizontalAlignment="Left" Margin="-5,217,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="15"/>
 
+            </Grid>
+            <Grid x:Name="batchGrid" Margin="48,50,-20,74" Visibility="Hidden">
+                <ListView x:Name="listView_batch" HorizontalAlignment="Left" Height="423" Margin="0,27,0,0" VerticalAlignment="Top" Width="807">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Name" Width="Auto">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Image Source="{Binding ImagePath}"/>
+                                            <TextBlock Text="{Binding Name}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Path" DisplayMemberBinding ="{Binding Path}" Width="auto"/>
+                            <GridViewColumn Header="Type" DisplayMemberBinding ="{Binding Type}" Width="auto"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+                <Label x:Name="batchLabel" Content="Contents that will be copied" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="15" FontWeight="Bold" Margin="-4,-5,0,0"/>
+                <Label x:Name="label_LoadBatch_Status" Content="" HorizontalAlignment="Left" Margin="75,454,0,0" VerticalAlignment="Top" Width="234"/>
+                <Button x:Name="button_LoadBatch_CSV" Content="Load Batch CSV" HorizontalAlignment="Left" Margin="75,427,0,0" VerticalAlignment="Top" Width="234"/>
             </Grid>
             <Grid x:Name="allGrid" Margin="48,50,-20,74" Visibility="Hidden">
                 <ListView x:Name="listView_all" HorizontalAlignment="Left" Height="423" Margin="0,27,0,0" VerticalAlignment="Top" Width="807">

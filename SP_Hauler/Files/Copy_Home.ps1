@@ -55,7 +55,7 @@ Add-Type -Path "$dir\Microsoft.SharePoint.Client.Taxonomy.dll"
 $global:selectedItemsForCopy = @()
 $global:itemsToCopy = @()
 $global:userData = @()
-$global:filteredItemsIdsData = @()
+$global:batchData = @()
 $global:comboSelection = @()
 $global:fieldValuesArrayForCSV = @()
 $global:errorsAll = @()
@@ -1408,7 +1408,7 @@ $WPFbutton_Next.Add_MouseUp( {
             $WPFbutton_Next.source = "$imagesDir\Button_Next_S.png"
             $global:nextClicked = $false
             if ($global:preciseLocation -eq "Copy") {
-                if (($WPFradioButton_No_Filter.isChecked -eq $true) -or ($WPFradioButton_Filter.isChecked -eq $true) -or ($WPFradioButton_Browser.isChecked -eq $true)) {
+                if (($WPFradioButton_No_Filter.isChecked -eq $true) -or ($WPFradioButton_Filter.isChecked -eq $true) -or ($WPFradioButton_Browser.isChecked -eq $true) -or ($WPFradioButton_Batch.isChecked -eq $true)) {
                     if ((($global:sourceSPTypeCheck -eq "File") -or ($global:sourceSPTypeCheck -eq "Meta")) -or ($global:destSPTypeCheck -eq "File")) {
                         copyFunctionFileShare
                     }
@@ -2667,8 +2667,27 @@ $WPFbutton_DateValidator.Add_click( {
     })
 
 
-$WPFbutton_Import_FilteredItems_CSV.Add_Click( {
-        $global:filteredItemsIdsData = @()
+####Copy with Batch Radio
+$WPFradioButton_Batch.Add_Click( {  
+    $global:copyMode = "Batch"  
+    if ($WPFbrowserGrid.Visibility -eq "Visible") {
+        opacityAnimation -grid $WPFbrowserGrid -action "Close"
+        ####Nullify Selected Items for Copy
+        $addItemsForViewArray = @()
+        $WPFlistView_Items.itemsSource = @()
+        $global:itemsToCopy = @()
+    }
+    if ($WPFallGrid.Visibility -eq "Visible") {
+        opacityAnimation -grid $WPFallGrid -action "Close"
+    }
+    $WPFimage_Tips.source = $imagesDir + "/Filters.png"
+    opacityAnimation -grid $WPFbatchGrid -action "Open"
+    $fieldsToShowFilter = $WPFlistView_Fields_Source.itemssource | where { (($_.Type -eq "Single line of Text") -or ($_.Type -eq "Date and Time") -or ($_.Type -eq "Lookup")) }
+    $WPFcomboBox_Field_To_Filter.itemsSource = $fieldsToShowFilter.Name
+})
+
+$WPFbutton_LoadBatch_CSV.Add_Click( {
+        $global:batchData = @()
         $WPFlabel_Imported_Status.Content = ""  
         $Form.Dispatcher.Invoke("Background", [action] {})
 
@@ -2682,15 +2701,16 @@ $WPFbutton_Import_FilteredItems_CSV.Add_Click( {
         $fileNameCSV = split-path  $templatepath -leaf -resolve
         if ($fileNameCSV.split(".")[-1] -eq "CSV") {
             try {
-                $global:filteredItemsIdsData = import-csv -path $templatepath
+                $global:batchData = import-csv -path $templatepath
             }
             catch {
                 [String]$Button = "OK"
                 $Button = [System.Windows.MessageBoxButton]::$Button
                 [System.Windows.MessageBox]::Show("Couldn't import CSV. Check file.", "Warning", $Button)
             }
-            if (($global:filteredItemsIdsData.ID[0])) {
-                $WPFlabel_Imported_Status.Content = "Filtered Items: $fileNameCSV"  
+            if (($global:batchData[0].ID)) {
+                
+                $WPFlabel_LoadBatch_Status.Content = "Batch file: $fileNameCSV"  
                 $Form.Dispatcher.Invoke("Background", [action] {})
             }
             else {
@@ -2773,15 +2793,19 @@ function createCAMLFilter_Old {
     return $camlQueryConstruct
 }
 
-function createCAMLFilter {
-    
+function createCAMLFilter
+{
     $fragments = @()
     foreach ($filter in $WPFlistView_Filters.items) {
-        $fragments += @"
-			<{0}>
-				<FieldRef Name='{1}' /><Value Type='{2}'>{3}</Value>
-			</{0}>
+        $filterObj = 
+        [pscustomobject]@{
+            Predicate = @"
+<{0}><FieldRef Name='{1}' /><Value Type='{2}'>{3}</Value></{0}>
 "@ -f $filter.Condition, $filter.Field, $filter.Type, $filter.Value
+            LogicOp = $filter.LogicOp
+        }
+
+        $fragments += $filterObj
     }
         
 
@@ -2793,14 +2817,14 @@ function createCAMLFilter {
 		</Where>
     </Query>
 </View>
-"@ -f (GetNestedCaml $fragments "And")
+"@ -f (GetNestedCaml $fragments)
 
 
     return $camlQueryConstruct
 }
 
 # Define method for nesting caml query statements
-function GetNestedCaml([array]$fragments, [string]$join)
+function GetNestedCaml([array]$fragments)
 {
     if ($fragments.Length -lt 1)
     {
@@ -2808,26 +2832,13 @@ function GetNestedCaml([array]$fragments, [string]$join)
     }
     elseif ($fragments.length -eq 1)
     {
-        return $fragments[0]
+        return $fragments[0].Predicate
     }
-    elseif ($fragments.length -eq 2)
-    {
-        return "<$join>" + $fragments[0] + $fragments[1] + "</$join>"
-    }
-    $joinFrags = @()
-     $baseJoinCount = [int][Math]::Floor($fragments.length / 2)
-    for ($i = 0; $i -lt $baseJoinCount; $i++)
-    {
-        $baseIndex = (2 * $i)
-        $fragsToJoin = @($fragments[$baseIndex], $fragments[$baseIndex + 1])
-        $joinFrag = GetNestedCaml $fragsToJoin $join
-        $joinFrags += $joinFrag
-    }
-    if ($fragments.length % 2 -ne 0)
-    {
-        $joinFrags += $fragments[$fragments.length - 1]
-    }
-    return GetNestedCaml $joinFrags $join
+
+    $logicOp = $fragments[0].LogicOp # get logic operator from first filter
+    $predicate1 = $fragments[0].Predicate
+    $predicate2 = If ($fragments.length -eq 2) {$fragments[1].Predicate} Else {(GetNestedCaml ($fragments | Select-Object -Skip 1))}
+    return "<$logicOp>" + $predicate1 + $predicate2 + "</$logicOp>"
 }
 
 
@@ -2886,6 +2897,7 @@ $WPFbutton_AddFilter.Add_Click( {
                 'Condition' = ""
                 'Value'     = $WPFtextBox_Filter_Value.Text
                 'Type'      = ""
+                'LogicOp'      = "And"
             }
 
             if ($WPFcomboBox_Condition.SelectedValue -eq "Equal") {
@@ -3607,6 +3619,19 @@ $exceptionMessage
             #$errorLogPath = $env:TEMP+"\"+"SPCopyErrorLog_$((Get-Date).ToString('dd-MM-yyyy_hh_mm')).txt"
             #$global:errorsAll | Out-File -FilePath $errorLogPath
             #Invoke-Item  $errorLogPath
+            $global:errorsAll | Out-GridView -Title "Error Log"
+            $global:errorsAll = @()
+        }
+
+        if ($global:copyMode -eq "Batch") {
+            Write-Host "Batch" $sourceListTitle -ForegroundColor Cyan
+            progressbar -state "Start" -all $global:batchData.count
+            iterateFileShareDestination2 -whatTo $global:batchData
+
+            $WPFlabel_Status.Content = "Status: Finished Copying!"
+            $Form.Dispatcher.Invoke("Background", [action] {})
+            progressbar -state "Stop"
+
             $global:errorsAll | Out-GridView -Title "Error Log"
             $global:errorsAll = @()
         }
@@ -4368,6 +4393,184 @@ function exportMetaData ($theItem, $theDestinationURL) {
 
     $global:fieldValuesArrayForCSV += $objFields
 }
+
+function iterateFileShareDestination2 ($whatTo) {
+
+    ####Store Field Values
+    $global:fieldValuesArrayForCSV = @()
+
+    $objFields = new-object psobject
+    foreach ($field in $WPFlistView_Fields_Final.ItemsSource) {
+        $objFields | Add-Member -type NoteProperty -Name $field.SourceName -Value $field.SourceType
+    }
+    $objFields | Add-Member -type NoteProperty -Name "FileRef" -Value $sourceListTitle
+    $objFields | Add-Member -type NoteProperty -Name "FileDirRef" -Value $list.RootFolder.serverrelativeurl
+    $objFields | Add-Member -type NoteProperty -Name "FileRefLocal" -Value $global:fileShareRoot
+    $objFields | Add-Member -type NoteProperty -Name "FSObjType" -Value "Type"
+
+    $global:fieldValuesArrayForCSV += $objFields
+
+    ####Store All created Folders
+    $fileDirRefs = @()
+
+    $listRelativeURL = $list.RootFolder.ServerRelativeUrl
+                       
+    ####Add List Root in the created Folders List
+    $fileDirRefs += $global:fileShareRoot
+
+    ####Handle User Fields
+    write-host "Pre-Ensuring Owner"
+
+    ####Ensure Owner. If users in user fields cannot be ensured the User wich is used for Destination logging will be used.
+    #ensureOwner
+
+    ####Start Iteration
+    foreach ($sourceItemRef in $whatTo) {
+        progressbar -state "Plus"
+
+
+        [Microsoft.SharePoint.Client.ListItem]$sourceItem = $List.GetItemById($sourceItemRef.ID)
+                
+        ####Commit
+        $context.Load($sourceItem)
+
+        try {
+            $context.ExecuteQuery()
+        }
+        catch {
+            [String]$Button = "OK"
+            $Button = [System.Windows.MessageBoxButton]::$Button
+
+            $exceptionMessage = $_.exception.message
+            $message = @"
+We encountered the following Error while getting the Items
+
+$exceptionMessage
+"@
+
+            [System.Windows.MessageBox]::Show($message, "Warning", $Button)
+
+            $WPFlabel_Status.Content = "Status: Idle"
+        }
+
+
+        ####if Folder
+        if ($sourceItem["FSObjType"] -eq 1) {
+            $WPFlabel_Status.Content = "Status: Copying Folder " + $sourceItem["FileRef"]
+            $Form.Dispatcher.Invoke("Background", [action] {})
+
+            write-host "Folder to be copied"$sourceItem["FileRef"] -ForegroundColor DarkCyan
+
+            ####Construct File Name and URL
+            $destinationFileName = $sourceItem["FileRef"].split("/")[-1]
+            $destinationFileURL = $sourceItem["FileRef"] -replace $listRelativeURL, $global:fileShareRoot
+            $destinationFileURL = $destinationFileURL -replace "/", "\"
+            $destinationFolderURL = $destinationFileURL.Substring(0, $destinationFileURL.lastIndexOf('\'))
+
+            exportMetaData -theItem $sourceItem -theDestinationURL $destinationFileURL
+
+            if ($fileDirRefs -contains $destinationFolderURL) {
+                try {
+                    New-Item -ItemType directory -Path $destinationFileURL
+                }
+                catch {
+                    write-host "Dir already exists."
+                }
+                $fileDirRefs += $destinationFileURL
+            }
+            else {
+                $checkFolderTrim = $destinationFolderURL
+                write-host "CHK FLD TRM"  $checkFolderTrim
+                $folderToCreateArray = @()    
+                while ((!($fileDirRefs -contains $checkFolderTrim)) -and ($checkFolderTrim -ne $global:fileShareRoot)) {
+                    $folderURLCount = ($checkFolderTrim.ToCharArray() | Where-Object { $_ -eq '\' } | Measure-Object).Count
+                    $obj = new-object psobject -Property @{
+                        'URL'   = $checkFolderTrim
+                        'Count' = $folderURLCount
+                    }
+                    $folderToCreateArray += $obj
+                    $checkFolderTrim = $checkFolderTrim.Substring(0, $checkFolderTrim.lastIndexOf('\'))
+                }
+                $folderToCreateArray = $folderToCreateArray | sort-object Count
+
+                foreach ($one in $folderToCreateArray) {
+                    $sourceURLOfTheTrim = $one.URL -replace ([RegEx]::Escape($global:fileShareRoot)), $listRelativeURL
+                    $sourceURLOfTheTrim = $sourceURLOfTheTrim -replace ([RegEx]::Escape("\")), "/"
+                    write-host "Reverse URL Folder" $sourceURLOfTheTrim
+                    $sourceItemSub = getSubItem -theItem $sourceURLOfTheTrim -targetLocation "Source"
+                    exportMetaData -theItem $sourceItemSub -theDestinationURL $one.URL
+
+                    New-Item -ItemType directory -Path $one.URL
+                    $fileDirRefs += $one.URL                        
+                }
+
+                New-Item -ItemType directory -Path $destinationFileURL
+                $fileDirRefs += $destinationFileURL                                
+            }
+        }
+
+        ####if File
+        if ($sourceItem["FSObjType"] -eq 0) {
+            $WPFlabel_Status.Content = "Status: Copying File " + $sourceItem["FileRef"]
+            $Form.Dispatcher.Invoke("Background", [action] {})
+
+            write-host "File to be copied"$sourceItem["FileRef"] -ForegroundColor DarkCyan
+              
+            ####Construct File Name and URL
+            $destinationFileName = $sourceItem["FileRef"].split("/")[-1]
+ 
+            $destinationFileURL = $sourceItem["FileRef"] -replace $listRelativeURL, $global:fileShareRoot
+            $destinationFileURL = $destinationFileURL -replace "/", "\"
+
+            $destinationFolderURL = $destinationFileURL.Substring(0, $destinationFileURL.lastIndexOf('\'))
+
+            exportMetaData -theItem $sourceItem -theDestinationURL $destinationFileURL
+
+            if ($list.BaseType -eq "DocumentLibrary") {                   
+                if ($fileDirRefs -contains $destinationFolderURL) {
+                    [Microsoft.SharePoint.Client.FileInformation]$fileInfo = [Microsoft.SharePoint.Client.File]::OpenBinaryDirect($Context, $sourceItem["FileRef"]);
+                    [System.IO.FileStream]$writeStream = [System.IO.File]::Open($destinationFileURL, [System.IO.FileMode]::Create);
+                    $fileInfo.Stream.CopyTo($writeStream);
+                    $writeStream.Close();
+                }
+                else {
+                    $checkFolderTrim = $destinationFolderURL
+                    $folderToCreateArray = @()    
+                    while ((!($fileDirRefs -contains $checkFolderTrim)) -and ($checkFolderTrim -ne $global:fileShareRoot)) {
+                        $folderURLCount = ($checkFolderTrim.ToCharArray() | Where-Object { $_ -eq '\' } | Measure-Object).Count
+                        $obj = new-object psobject -Property @{
+                            'URL'   = $checkFolderTrim
+                            'Count' = $folderURLCount
+                        }
+                        $folderToCreateArray += $obj
+                        $checkFolderTrim = $checkFolderTrim.Substring(0, $checkFolderTrim.lastIndexOf('\'))
+                    }
+                    $folderToCreateArray = $folderToCreateArray | sort-object Count
+
+                    foreach ($one in $folderToCreateArray) {
+                        $sourceURLOfTheTrim = $one.URL -replace ([RegEx]::Escape($global:fileShareRoot)), $listRelativeURL
+                        $sourceURLOfTheTrim = $sourceURLOfTheTrim -replace ([RegEx]::Escape("\")), "/"
+                        write-host "Reverse URL Item" $sourceURLOfTheTrim
+                        $sourceItemSub = getSubItem -theItem $sourceURLOfTheTrim -targetLocation "Source"
+                        exportMetaData -theItem $sourceItemSub -theDestinationURL $one.URL
+                        New-Item -ItemType directory -Path $one.URL
+                        $fileDirRefs += $one.URL                        
+                    }
+                    [Microsoft.SharePoint.Client.FileInformation]$fileInfo = [Microsoft.SharePoint.Client.File]::OpenBinaryDirect($Context, $sourceItem["FileRef"]);
+                    [System.IO.FileStream]$writeStream = [System.IO.File]::Open($destinationFileURL, [System.IO.FileMode]::Create);
+                    $fileInfo.Stream.CopyTo($writeStream);
+                    $writeStream.Close();
+                }
+            }
+        }
+    }
+
+    #$global:fieldValuesArrayForCSV | Out-GridView 
+
+    $csvPath = $global:fileShareRoot + "\" + "Metadata.csv"
+    $global:fieldValuesArrayForCSV | Export-Csv -Path $csvPath -NoTypeInformation -Encoding UTF8
+}
+
 
 function iterateFileShareDestination ($whatTo) {
 
