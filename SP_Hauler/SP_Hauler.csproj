@@ -7,8 +7,8 @@
     <ProjectGuid>{5D9A6978-48BA-448C-B9C1-3506A900CF97}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ConsoleApplication5</RootNamespace>
-    <AssemblyName>ConsoleApplication5</AssemblyName>
+    <RootNamespace>SP_Hauler</RootNamespace>
+    <AssemblyName>SP_Hauler</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -56,18 +56,22 @@
     <ApplicationIcon>Logo_Big.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="system.management.automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Desktop\Temp\PowerShell_FORMS\PS_WORK\system.management.automation.dll</HintPath>
     </Reference>
+    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extract.cs" />
@@ -95,26 +99,28 @@
     <EmbeddedResource Include="Files\Microsoft.SharePoint.Client.Runtime.dll" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Images\file-icon-28038.png" />
-    <EmbeddedResource Include="Images\icon-folder-128.png" />
+    <EmbeddedResource Include="Files\Images\file-icon-28038.png" />
+    <EmbeddedResource Include="Files\Images\icon-folder-128.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Files\Microsoft.SharePoint.Client.Taxonomy.dll" />
     <EmbeddedResource Include="Files\Copy_Home.txt" />
     <Content Include="Icon_Big.ico" />
-    <EmbeddedResource Include="Images\Logo.ico" />
-    <EmbeddedResource Include="Images\Button_Next_S.png" />
-    <EmbeddedResource Include="Images\Button_Next_S_Click.png" />
-    <EmbeddedResource Include="Images\Button_Prev_S.png" />
-    <EmbeddedResource Include="Images\Button_Prev_S_Click.png" />
-    <EmbeddedResource Include="Images\Close.png" />
-    <EmbeddedResource Include="Images\Close_Clicked.png" />
-    <EmbeddedResource Include="Images\Top_Banner.png" />
-    <EmbeddedResource Include="Images\Top_Four.png" />
-    <EmbeddedResource Include="Images\Top_One.png" />
-    <EmbeddedResource Include="Images\Top_Three.png" />
-    <EmbeddedResource Include="Images\Top_Two.png" />
-    <EmbeddedResource Include="Images\Fields_Back_Advanced.png" />
+    <EmbeddedResource Include="Files\Images\Logo.ico" />
+    <EmbeddedResource Include="Files\Images\Button_Next_S.png" />
+    <EmbeddedResource Include="Files\Images\Button_Next_S_Click.png" />
+    <EmbeddedResource Include="Files\Images\Button_Prev_S.png" />
+    <EmbeddedResource Include="Files\Images\Button_Prev_S_Click.png" />
+    <EmbeddedResource Include="Files\Images\Close.png" />
+    <EmbeddedResource Include="Files\Images\Close_Clicked.png" />
+    <EmbeddedResource Include="Files\Images\Top_Banner.png" />
+    <EmbeddedResource Include="Files\Images\Top_Four.png" />
+    <EmbeddedResource Include="Files\Images\Top_One.png" />
+    <EmbeddedResource Include="Files\Images\Top_Three.png" />
+    <EmbeddedResource Include="Files\Images\Top_Two.png" />
+    <EmbeddedResource Include="Files\Images\Fields_Back_Advanced.png" />
+    <EmbeddedResource Include="Files\Images\Explorer.png" />
+    <EmbeddedResource Include="Files\Images\Filters.png" />
     <Content Include="Logo_Big.ico" />
   </ItemGroup>
   <ItemGroup>

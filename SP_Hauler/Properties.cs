@@ -1,4 +1,4 @@
-﻿namespace ConsoleApplication5
+﻿namespace SP_Hauler
 {
     internal class Properties
     {

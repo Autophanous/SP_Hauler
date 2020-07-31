@@ -1,9 +1,9 @@
-<Window x:Class="WpfApplication2.MainWindow"
+<Window x:Class="SP_Hauler.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WpfApplication2"
+        xmlns:local="clr-namespace:SP_Hauler"
         Title="SharePoint Haulier" Height="800.000" Width="859.641" Topmost="False" ResizeMode="CanMinimize">
 
     <Grid x:Name="Main" Height="775" VerticalAlignment="Top" Margin="-10,0,0,-3" HorizontalAlignment="Left" Width="854">
@@ -12,7 +12,7 @@
             <ColumnDefinition Width="405*"/>
         </Grid.ColumnDefinitions>
 
-        <Image x:Name="Top_Banner" Grid.ColumnSpan="2" Margin="4,0,4,675" Source="CHANGELATERIMAGEPATH/Top_Banner.png" Stretch="Fill"/>
+        <Image x:Name="Top_Banner" Grid.ColumnSpan="2" Margin="4,0,4,675" Stretch="Fill" Source="CHANGELATERIMAGEPATH/Top_Banner.png"/>
         <Image x:Name="Top_One" Grid.ColumnSpan="2" Margin="10,100,-6,615" Source="CHANGELATERIMAGEPATH/Top_One.png" Stretch="Fill"/>
 
         <Image x:Name="Button_Next"  Height="45" VerticalAlignment="Top" Source="CHANGELATERIMAGEPATH/Button_Next_S_Click.png" Margin="249,693,18,0" Grid.Column="1" Stretch="None" />
@@ -88,14 +88,14 @@
             <Button x:Name="Back_Button_One" HorizontalAlignment="Left" Height="40" VerticalAlignment="Top" Width="40" Margin="353,-8,0,0" Visibility="Hidden" >
                 <Button.Template>
                     <ControlTemplate>
-                        <Image x:Name="image_Back_One"  Height="32" VerticalAlignment="Top" Width="32" Source="file:///C:/Users/GeorgiLub/Documents/Visual Studio 2015/Projects/ConsoleApplication5/ConsoleApplication5/Files/Back_Small.png" />
+                        <Image x:Name="image_Back_One"  Height="32" VerticalAlignment="Top" Width="32" Source="CHANGELATERIMAGEPATH/Back_Small.png" />
                     </ControlTemplate>
                 </Button.Template>
             </Button>
             <Button x:Name="Back_Button_Two" HorizontalAlignment="Left" Height="40" VerticalAlignment="Top" Width="40" Visibility="Hidden" Margin="768,-8,0,0" >
                 <Button.Template>
                     <ControlTemplate>
-                        <Image x:Name="image_back_One"  Height="32" VerticalAlignment="Top" Width="32" Source="file:///C:/Users/GeorgiLub/Documents/Visual Studio 2015/Projects/ConsoleApplication5/ConsoleApplication5/Files/Back_Small.png"  />
+                        <Image x:Name="image_back_One"  Height="32" VerticalAlignment="Top" Width="32" Source="CHANGELATERIMAGEPATH/Back_Small.png"  />
                     </ControlTemplate>
                 </Button.Template>
             </Button>
@@ -113,6 +113,7 @@
                 <TextBox x:Name="textBox_Filter_Value" HorizontalAlignment="Left" Height="24" Margin="475,0,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="329"/>
                 <Button x:Name="button_DateValidator" Content="Date Validator" HorizontalAlignment="Left" Margin="714,29,0,-27" VerticalAlignment="Top" Width="90" Visibility="Hidden"/>
                 <Button x:Name="button_AddFilter" Content="Add Filter" HorizontalAlignment="Left" Margin="0,29,0,-27" VerticalAlignment="Top" Width="75"/>
+                <Button x:Name="button_Import_FilteredItems_CSV" Content="Import Filtered Items CSV" HorizontalAlignment="Left" Margin="75,427,0,0" VerticalAlignment="Top" Width="234"/>
                 <ListView x:Name="listView_Filters" HorizontalAlignment="Left" Height="311" Margin="0,96,0,0" VerticalAlignment="Top" Width="389">
                     <ListView.View>
                         <GridView>
@@ -288,13 +289,13 @@
         <Button x:Name="Back_Button_Three" HorizontalAlignment="Left" Height="40" VerticalAlignment="Top" Width="40" Grid.Column="1" Margin="359,158,0,0" Visibility="Hidden">
             <Button.Template>
                 <ControlTemplate>
-                    <Image x:Name="image_back_One"  Height="32" VerticalAlignment="Top" Width="32" Source="file:///C:/Users/GeorgiLub/Documents/Visual Studio 2015/Projects/ConsoleApplication5/ConsoleApplication5/Files/Back_Small.png"  />
+                    <Image x:Name="image_back_One"  Height="32" VerticalAlignment="Top" Width="32" Source="CHANGELATERIMAGEPATH/Back_Small.png"  />
                 </ControlTemplate>
             </Button.Template>
         </Button>
         <Button x:Name="button_Copy_NoFilter" Content="Copy" HorizontalAlignment="Left" Height="20" Margin="18,239,0,0" VerticalAlignment="Top" Width="808" FontSize="10" Grid.ColumnSpan="2" Visibility="Hidden"/>
         <Image x:Name="image_Tips" HorizontalAlignment="Left" Height="764" VerticalAlignment="Top" Width="846" Grid.ColumnSpan="2" Margin="0,0,0,0" Visibility="Hidden" />
-        <Image x:Name="image_Initial" Grid.Column="1" Margin="142,566,0,-1" Visibility="Hidden" Source="Initial_Image.png" Width="285" Height="206"  />
+        <Image x:Name="image_Initial" Grid.Column="1" Margin="142,566,0,-1" Visibility="Hidden" Source="CHANGELATERIMAGEPATH/Initial_Image.png" Width="285" Height="206"  />
         <Label x:Name="label_Error_Status" Content="" HorizontalAlignment="Left" Margin="294,739,0,0" VerticalAlignment="Top" Grid.ColumnSpan="2" Width="275"/>
         <Label x:Name="label_Where_Source" Content="" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="407"/>
         <Label x:Name="label_Where_Dest" Content="" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="407" Grid.Column="1"/>

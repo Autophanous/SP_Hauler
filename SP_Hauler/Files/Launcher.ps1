@@ -3,8 +3,7 @@ param([string]$pass);
 $scriptpath = $MyInvocation.MyCommand.Path
 $dir = Split-Path $scriptpath
 
-function ConvertTo-Key
-{
+function ConvertTo-Key {
     param(
         $From,
         $InputObject
@@ -13,36 +12,30 @@ function ConvertTo-Key
     Set-StrictMode -Version 'Latest'
     #Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState    
 
-    if( $InputObject -isnot [byte[]] )
-    {
-        if( $InputObject -is [SecureString] )
-        {
+    if ( $InputObject -isnot [byte[]] ) {
+        if ( $InputObject -is [SecureString] ) {
             $InputObject = Convert-SecureStringToString -SecureString $InputObject
         }
-        elseif( $InputObject -isnot [string] )
-        {
+        elseif ( $InputObject -isnot [string] ) {
             Write-Error -Message ('Encryption key must be a SecureString, a string, or an array of bytes not a {0}. If you are passing an array of bytes, make sure you explicitly cast it as a `byte[]`, e.g. `([byte[]])@( ... )`.' -f $InputObject.GetType().FullName)
             return
         }
 
         $Key = [Text.Encoding]::UTF8.GetBytes($InputObject)
     }
-    else
-    {
+    else {
         $Key = $InputObject
     }
 
-    if( $Key.Length -ne 128/8 -and $Key.Length -ne 192/8 -and $Key.Length -ne 256/8 )
-    {
-        Write-Error -Message ('Key is the wrong length. {0} is using AES, which requires a 128-bit, 192-bit, or 256-bit key (16, 24, or 32 bytes, respectively). You passed a key of {1} bits ({2} bytes).' -f $From,($Key.Length*8),$Key.Length)
+    if ( $Key.Length -ne 128 / 8 -and $Key.Length -ne 192 / 8 -and $Key.Length -ne 256 / 8 ) {
+        Write-Error -Message ('Key is the wrong length. {0} is using AES, which requires a 128-bit, 192-bit, or 256-bit key (16, 24, or 32 bytes, respectively). You passed a key of {1} bits ({2} bytes).' -f $From, ($Key.Length * 8), $Key.Length)
         return
     }
 
     return $Key
 }
 
-filter Protect-String
-{
+filter Protect-String {
     <#
     .SYNOPSIS
     Encrypts a string.
@@ -152,51 +145,51 @@ filter Protect-String
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true, Position=0, ValueFromPipeline = $true)]
+        [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline = $true)]
         [object]
         # The string to encrypt. Any non-string object you pass will be converted to a string before encrypting by calling the object's `ToString` method.
         #
         # Beginning in Carbon 2.4.0, this can also be a `SecureString` object. The `SecureString` is converted to an array of bytes, the bytes are encrypted, then the plaintext bytes are cleared from memory (i.e. the plaintext password is in memory for the amount of time it takes to encrypt it).
         $String,
         
-        [Parameter(Mandatory=$true,ParameterSetName='DPAPICurrentUser')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'DPAPICurrentUser')]
         # Encrypts for the current user so that only he can decrypt.
         [Switch]
         $ForUser,
         
-        [Parameter(Mandatory=$true,ParameterSetName='DPAPILocalMachine')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'DPAPILocalMachine')]
         # Encrypts for the current computer so that any user logged into the computer can decrypt.
         [Switch]
         $ForComputer,
 
-        [Parameter(Mandatory=$true,ParameterSetName='DPAPIForUser')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'DPAPIForUser')]
         [Management.Automation.PSCredential]
         # Encrypts for a specific user.
         $Credential,
 
-        [Parameter(Mandatory=$true,ParameterSetName='RSAByCertificate')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'RSAByCertificate')]
         [Security.Cryptography.X509Certificates.X509Certificate2]
         # The public key to use for encrypting.
         $Certificate,
 
-        [Parameter(Mandatory=$true,ParameterSetName='RSAByThumbprint')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'RSAByThumbprint')]
         [string]
         # The thumbprint of the certificate, found in one of the Windows certificate stores, to use when encrypting. All certificate stores are searched.
         $Thumbprint,
 
-        [Parameter(Mandatory=$true,ParameterSetName='RSAByPath')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'RSAByPath')]
         [string]
         # The path to the public key to use for encrypting. Must be to an `X509Certificate2` object.
         $PublicKeyPath,
 
-        [Parameter(ParameterSetName='RSAByCertificate')]
-        [Parameter(ParameterSetName='RSAByThumbprint')]
-        [Parameter(ParameterSetName='RSAByPath')]
+        [Parameter(ParameterSetName = 'RSAByCertificate')]
+        [Parameter(ParameterSetName = 'RSAByThumbprint')]
+        [Parameter(ParameterSetName = 'RSAByPath')]
         [Switch]
         # If true, uses Direct Encryption (PKCS#1 v1.5) padding. Otherwise (the default), uses OAEP (PKCS#1 v2) padding. See [Encrypt](http://msdn.microsoft.com/en-us/library/system.security.cryptography.rsacryptoserviceprovider.encrypt(v=vs.110).aspx) for information.
         $UseDirectEncryptionPadding,
 
-        [Parameter(Mandatory=$true,ParameterSetName='Symmetric')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'Symmetric')]
         # The key to use to encrypt the secret. Can be a `SecureString`, a `String`, or an array of bytes. Must be 16, 24, or 32 characters/bytes in length.
         [object]
         $Key
@@ -206,140 +199,113 @@ filter Protect-String
 
     ####Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState
 
-    if( $String -is [System.Security.SecureString] )
-    {
+    if ( $String -is [System.Security.SecureString] ) {
         $stringBytes = [Carbon.Security.SecureStringConverter]::ToBytes($String)   
     }
-    else
-    {
+    else {
         $stringBytes = [Text.Encoding]::UTF8.GetBytes( $String.ToString() )
     }
     
-    try
-    {    
+    try {    
 
-        if( $PSCmdlet.ParameterSetName -like 'DPAPI*' )
-        {
-            if( $PSCmdlet.ParameterSetName -eq 'DPAPIForUser' ) 
-            {
+        if ( $PSCmdlet.ParameterSetName -like 'DPAPI*' ) {
+            if ( $PSCmdlet.ParameterSetName -eq 'DPAPIForUser' ) {
                 $protectStringPath = Join-Path -Path $CarbonBinDir -ChildPath 'Protect-String.ps1' -Resolve
                 $encodedString = Protect-String -String $String -ForComputer
                 $argumentList = '-ProtectedString {0}' -f $encodedString
                 Invoke-PowerShell -ExecutionPolicy 'ByPass' -NonInteractive -FilePath $protectStringPath -ArgumentList $argumentList -Credential $Credential |
-                    Select-Object -First 1
+                Select-Object -First 1
                 return
             }
-            else
-            {
+            else {
                 $scope = [Security.Cryptography.DataProtectionScope]::CurrentUser
-                if( $PSCmdlet.ParameterSetName -eq 'DPAPILocalMachine' )
-                {
+                if ( $PSCmdlet.ParameterSetName -eq 'DPAPILocalMachine' ) {
                     $scope = [Security.Cryptography.DataProtectionScope]::LocalMachine
                 }
 
                 $encryptedBytes = [Security.Cryptography.ProtectedData]::Protect( $stringBytes, $null, $scope )
             }
         }
-        elseif( $PSCmdlet.ParameterSetName -like 'RSA*' )
-        {
-            if( $PSCmdlet.ParameterSetName -eq 'RSAByThumbprint' )
-            {
+        elseif ( $PSCmdlet.ParameterSetName -like 'RSA*' ) {
+            if ( $PSCmdlet.ParameterSetName -eq 'RSAByThumbprint' ) {
                 $Certificate = Get-ChildItem -Path ('cert:\*\*\{0}' -f $Thumbprint) -Recurse | Select-Object -First 1
-                if( -not $Certificate )
-                {
+                if ( -not $Certificate ) {
                     Write-Error ('Certificate with thumbprint ''{0}'' not found.' -f $Thumbprint)
                     return
                 }
             }
-            elseif( $PSCmdlet.ParameterSetName -eq 'RSAByPath' )
-            {
+            elseif ( $PSCmdlet.ParameterSetName -eq 'RSAByPath' ) {
                 $Certificate = Get-Certificate -Path $PublicKeyPath
-                if( -not $Certificate )
-                {
+                if ( -not $Certificate ) {
                     return
                 }
             }
 
             $rsaKey = $Certificate.PublicKey.Key
-            if( $rsaKey -isnot ([Security.Cryptography.RSACryptoServiceProvider]) )
-            {
-                Write-Error ('Certificate ''{0}'' (''{1}'') is not an RSA key. Found a public key of type ''{2}'', but expected type ''{3}''.' -f $Certificate.Subject,$Certificate.Thumbprint,$rsaKey.GetType().FullName,[Security.Cryptography.RSACryptoServiceProvider].FullName)
+            if ( $rsaKey -isnot ([Security.Cryptography.RSACryptoServiceProvider]) ) {
+                Write-Error ('Certificate ''{0}'' (''{1}'') is not an RSA key. Found a public key of type ''{2}'', but expected type ''{3}''.' -f $Certificate.Subject, $Certificate.Thumbprint, $rsaKey.GetType().FullName, [Security.Cryptography.RSACryptoServiceProvider].FullName)
                 return
             }
 
-            try
-            {
+            try {
                 $encryptedBytes = $rsaKey.Encrypt( $stringBytes, (-not $UseDirectEncryptionPadding) )
             }
-            catch
-            {
-                if( $_.Exception.Message -match 'Bad Length\.' -or $_.Exception.Message -match 'The parameter is incorrect\.')
-                {
+            catch {
+                if ( $_.Exception.Message -match 'Bad Length\.' -or $_.Exception.Message -match 'The parameter is incorrect\.') {
                     [int]$maxLengthGuess = ($rsaKey.KeySize - (2 * 160 - 2)) / 8
-                    Write-Error -Message ('Failed to encrypt. String is longer than maximum length allowed by RSA and your key size, which is {0} bits. We estimate the maximum string size you can encrypt with certificate ''{1}'' ({2}) is {3} bytes. You may still get errors when you attempt to decrypt a string within a few bytes of this estimated maximum.' -f $rsaKey.KeySize,$Certificate.Subject,$Certificate.Thumbprint,$maxLengthGuess)
+                    Write-Error -Message ('Failed to encrypt. String is longer than maximum length allowed by RSA and your key size, which is {0} bits. We estimate the maximum string size you can encrypt with certificate ''{1}'' ({2}) is {3} bytes. You may still get errors when you attempt to decrypt a string within a few bytes of this estimated maximum.' -f $rsaKey.KeySize, $Certificate.Subject, $Certificate.Thumbprint, $maxLengthGuess)
                     return
                 }
-                else
-                {
+                else {
                     Write-Error -Exception $_.Exception
                     return
                 }
             }
         }
-        elseif( $PSCmdlet.ParameterSetName -eq 'Symmetric' )
-        {
+        elseif ( $PSCmdlet.ParameterSetName -eq 'Symmetric' ) {
             $Key = ConvertTo-Key -InputObject $Key -From 'Protect-String'
-            if( -not $Key )
-            {
+            if ( -not $Key ) {
                 return
             }
                 
             $aes = New-Object 'Security.Cryptography.AesCryptoServiceProvider'
-            try
-            {
+            try {
                 $aes.Padding = [Security.Cryptography.PaddingMode]::PKCS7
                 $aes.KeySize = $Key.Length * 8
                 $aes.Key = $Key
 
                 $memoryStream = New-Object 'IO.MemoryStream'
-                try
-                {
-                    $cryptoStream = New-Object 'Security.Cryptography.CryptoStream' $memoryStream,$aes.CreateEncryptor(),([Security.Cryptography.CryptoStreamMode]::Write)
-                    try
-                    {
-                        $cryptoStream.Write($stringBytes,0,$stringBytes.Length)
+                try {
+                    $cryptoStream = New-Object 'Security.Cryptography.CryptoStream' $memoryStream, $aes.CreateEncryptor(), ([Security.Cryptography.CryptoStreamMode]::Write)
+                    try {
+                        $cryptoStream.Write($stringBytes, 0, $stringBytes.Length)
                     }
-                    finally
-                    {
+                    finally {
                         $cryptoStream.Dispose()
                     }
 
                     $encryptedBytes = Invoke-Command -ScriptBlock {
-                                                                     $aes.IV
-                                                                     $memoryStream.ToArray()
-                                                                  }
+                        $aes.IV
+                        $memoryStream.ToArray()
+                    }
                 }
-                finally
-                {
+                finally {
                     $memoryStream.Dispose()
                 }
             }
-            finally
-            {
+            finally {
                 $aes.Dispose()
             }
         }
 
         return [Convert]::ToBase64String( $encryptedBytes )
     }
-    finally
-    {
+    finally {
         $stringBytes.Clear()
     }
 }
 
-filter Unprotect-String
-{
+filter Unprotect-String {
     <#
     .SYNOPSIS
     Decrypts a string.
@@ -429,40 +395,40 @@ filter Unprotect-String
 
     Demonstrates how to decrypt a secret that was encrypted with a key, password, or passphrase as an array of bytes. This functionality was added in Carbon 2.3.0.
     #>
-    [CmdletBinding(DefaultParameterSetName='DPAPI')]
+    [CmdletBinding(DefaultParameterSetName = 'DPAPI')]
     param(
-        [Parameter(Mandatory = $true, Position=0, ValueFromPipeline = $true)]
+        [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline = $true)]
         [string]
         # The text to decrypt.
         $ProtectedString,
 
-        [Parameter(Mandatory=$true,ParameterSetName='RSAByCertificate')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'RSAByCertificate')]
         [Security.Cryptography.X509Certificates.X509Certificate2]
         # The private key to use for decrypting.
         $Certificate,
 
-        [Parameter(Mandatory=$true,ParameterSetName='RSAByThumbprint')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'RSAByThumbprint')]
         [string]
         # The thumbprint of the certificate, found in one of the Windows certificate stores, to use when decrypting. All certificate stores are searched. The current user must have permission to the private key.
         $Thumbprint,
 
-        [Parameter(Mandatory=$true,ParameterSetName='RSAByPath')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'RSAByPath')]
         [string]
         # The path to the private key to use for encrypting. Must be to an `X509Certificate2` file or a certificate in a certificate store.
         $PrivateKeyPath,
 
-        [Parameter(ParameterSetName='RSAByPath')]
+        [Parameter(ParameterSetName = 'RSAByPath')]
         # The password for the private key, if it has one. It really should. Can be a `[string]` or a `[securestring]`.
         $Password,
 
-        [Parameter(ParameterSetName='RSAByCertificate')]
-        [Parameter(ParameterSetName='RSAByThumbprint')]
-        [Parameter(ParameterSetName='RSAByPath')]
+        [Parameter(ParameterSetName = 'RSAByCertificate')]
+        [Parameter(ParameterSetName = 'RSAByThumbprint')]
+        [Parameter(ParameterSetName = 'RSAByPath')]
         [Switch]
         # If true, uses Direct Encryption (PKCS#1 v1.5) padding. Otherwise (the default), uses OAEP (PKCS#1 v2) padding. See [Encrypt](http://msdn.microsoft.com/en-us/library/system.security.cryptography.rsacryptoserviceprovider.encrypt(v=vs.110).aspx) for information.
         $UseDirectEncryptionPadding,
 
-        [Parameter(Mandatory=$true,ParameterSetName='Symmetric')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'Symmetric')]
         [object]
         # The key to use to decrypt the secret. Must be a `SecureString`, `string`, or an array of bytes.
         $Key,
@@ -477,70 +443,56 @@ filter Unprotect-String
     ####Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState
         
     [byte[]]$encryptedBytes = [Convert]::FromBase64String($ProtectedString)
-    if( $PSCmdlet.ParameterSetName -eq 'DPAPI' )
-    {
+    if ( $PSCmdlet.ParameterSetName -eq 'DPAPI' ) {
         $decryptedBytes = [Security.Cryptography.ProtectedData]::Unprotect( $encryptedBytes, $null, 0 )
     }
-    elseif( $PSCmdlet.ParameterSetName -like 'RSA*' )
-    {
-        if( $PSCmdlet.ParameterSetName -like '*ByPath' )
-        {
+    elseif ( $PSCmdlet.ParameterSetName -like 'RSA*' ) {
+        if ( $PSCmdlet.ParameterSetName -like '*ByPath' ) {
             $passwordParam = @{ }
-            if( $Password )
-            {
+            if ( $Password ) {
                 $passwordParam = @{ Password = $Password }
             }
             $Certificate = Get-Certificate -Path $PrivateKeyPath @passwordParam
-            if( -not $Certificate )
-            {
+            if ( -not $Certificate ) {
                 return
             }
         }
-        elseif( $PSCmdlet.ParameterSetName -like '*ByThumbprint' )
-        {
+        elseif ( $PSCmdlet.ParameterSetName -like '*ByThumbprint' ) {
             $certificates = Get-ChildItem -Path ('cert:\*\*\{0}' -f $Thumbprint) -Recurse 
-            if( -not $certificates )
-            {
+            if ( -not $certificates ) {
                 Write-Error ('Certificate ''{0}'' not found.' -f $Thumbprint)
                 return
             }
 
             $Certificate = $certificates | Where-Object { $_.HasPrivateKey } | Select-Object -First 1
-            if( -not $Certificate )
-            {
+            if ( -not $Certificate ) {
                 Write-Error ('Certificate ''{0}'' ({1}) doesn''t have a private key.' -f $certificates[0].Subject, $Thumbprint)
                 return
             }
         }
 
-        if( -not $Certificate.HasPrivateKey )
-        {
-            Write-Error ('Certificate ''{0}'' ({1}) doesn''t have a private key. When decrypting with RSA, secrets are encrypted with the public key, and decrypted with a private key.' -f $Certificate.Subject,$Certificate.Thumbprint)
+        if ( -not $Certificate.HasPrivateKey ) {
+            Write-Error ('Certificate ''{0}'' ({1}) doesn''t have a private key. When decrypting with RSA, secrets are encrypted with the public key, and decrypted with a private key.' -f $Certificate.Subject, $Certificate.Thumbprint)
             return
         }
 
-        if( -not $Certificate.PrivateKey )
-        {
-            Write-Error ('Certificate ''{0}'' ({1}) has a private key, but it is currently null or not set. This usually means your certificate was imported or generated incorrectly. Make sure you''ve generated an RSA public/private key pair and are using the private key. If the private key is in the Windows certificate stores, make sure it was imported correctly (`Get-ChildItem $pathToCert | Select-Object -Expand PrivateKey` isn''t null).' -f $Certificate.Subject,$Certificate.Thumbprint)
+        if ( -not $Certificate.PrivateKey ) {
+            Write-Error ('Certificate ''{0}'' ({1}) has a private key, but it is currently null or not set. This usually means your certificate was imported or generated incorrectly. Make sure you''ve generated an RSA public/private key pair and are using the private key. If the private key is in the Windows certificate stores, make sure it was imported correctly (`Get-ChildItem $pathToCert | Select-Object -Expand PrivateKey` isn''t null).' -f $Certificate.Subject, $Certificate.Thumbprint)
             return
         }
 
         [Security.Cryptography.RSACryptoServiceProvider]$privateKey = $null
-        if( $Certificate.PrivateKey -isnot [Security.Cryptography.RSACryptoServiceProvider] )
-        {
-            Write-Error ('Certificate ''{0}'' (''{1}'') is not an RSA key. Found a private key of type ''{2}'', but expected type ''{3}''.' -f $Certificate.Subject,$Certificate.Thumbprint,$Certificate.PrivateKey.GetType().FullName,[Security.Cryptography.RSACryptoServiceProvider].FullName)
+        if ( $Certificate.PrivateKey -isnot [Security.Cryptography.RSACryptoServiceProvider] ) {
+            Write-Error ('Certificate ''{0}'' (''{1}'') is not an RSA key. Found a private key of type ''{2}'', but expected type ''{3}''.' -f $Certificate.Subject, $Certificate.Thumbprint, $Certificate.PrivateKey.GetType().FullName, [Security.Cryptography.RSACryptoServiceProvider].FullName)
             return
         }
 
-        try
-        {
+        try {
             $privateKey = $Certificate.PrivateKey
             $decryptedBytes = $privateKey.Decrypt( $encryptedBytes, (-not $UseDirectEncryptionPadding) )
         }
-        catch
-        {
-            if( $_.Exception.Message -match 'Error occurred while decoding OAEP padding' )
-            {
+        catch {
+            if ( $_.Exception.Message -match 'Error occurred while decoding OAEP padding' ) {
                 [int]$maxLengthGuess = ($privateKey.KeySize - (2 * 160 - 2)) / 8
                 Write-Error (@'
 Failed to decrypt string using certificate '{0}' ({1}). This can happen when:
@@ -549,82 +501,68 @@ Failed to decrypt string using certificate '{0}' ({1}). This can happen when:
  * The string isn't encrypted
 
 {4}: {5}
-'@ -f $Certificate.Subject, $Certificate.Thumbprint,$privateKey.KeySize,$maxLengthGuess,$_.Exception.GetType().FullName,$_.Exception.Message)
+'@ -f $Certificate.Subject, $Certificate.Thumbprint, $privateKey.KeySize, $maxLengthGuess, $_.Exception.GetType().FullName, $_.Exception.Message)
                 return
             }
-            elseif( $_.Exception.Message -match '(Bad Data|The parameter is incorrect)\.' )
-            {
+            elseif ( $_.Exception.Message -match '(Bad Data|The parameter is incorrect)\.' ) {
                 Write-Error (@'
 Failed to decrypt string using certificate '{0}' ({1}). This usually happens when the padding algorithm used when encrypting/decrypting is different. Check the `-UseDirectEncryptionPadding` switch is the same for both calls to `Protect-String` and `Unprotect-String`.
 
 {2}: {3}
-'@ -f $Certificate.Subject,$Certificate.Thumbprint,$_.Exception.GetType().FullName,$_.Exception.Message)
+'@ -f $Certificate.Subject, $Certificate.Thumbprint, $_.Exception.GetType().FullName, $_.Exception.Message)
                 return
             }
             Write-Error -Exception $_.Exception
             return
         }
     }
-    elseif( $PSCmdlet.ParameterSetName -eq 'Symmetric' )
-    {
+    elseif ( $PSCmdlet.ParameterSetName -eq 'Symmetric' ) {
         $Key = ConvertTo-Key -InputObject $Key -From 'Unprotect-String'
-        if( -not $Key )
-        {
+        if ( -not $Key ) {
             return
         }
                 
         $aes = New-Object 'Security.Cryptography.AesCryptoServiceProvider'
-        try
-        {
+        try {
             $aes.Padding = [Security.Cryptography.PaddingMode]::PKCS7
             $aes.KeySize = $Key.Length * 8
             $aes.Key = $Key
             $iv = New-Object 'Byte[]' $aes.IV.Length
-            [Array]::Copy($encryptedBytes,$iv,16)
+            [Array]::Copy($encryptedBytes, $iv, 16)
 
             $encryptedBytes = $encryptedBytes[16..($encryptedBytes.Length - 1)]
-            $encryptedStream = New-Object 'IO.MemoryStream' (,$encryptedBytes)
-            try
-            {
+            $encryptedStream = New-Object 'IO.MemoryStream' (, $encryptedBytes)
+            try {
                 $decryptor = $aes.CreateDecryptor($aes.Key, $iv)
-                try
-                {
-                    $cryptoStream = New-Object 'Security.Cryptography.CryptoStream' $encryptedStream,$decryptor,([Security.Cryptography.CryptoStreamMode]::Read)
-                    try
-                    {
+                try {
+                    $cryptoStream = New-Object 'Security.Cryptography.CryptoStream' $encryptedStream, $decryptor, ([Security.Cryptography.CryptoStreamMode]::Read)
+                    try {
                         $decryptedBytes = New-Object 'byte[]' ($encryptedBytes.Length)
                         [void]$cryptoStream.Read($decryptedBytes, 0, $decryptedBytes.Length)
                     }
-                    finally
-                    {
+                    finally {
                         $cryptoStream.Dispose()
                     }
                 }
-                finally
-                {
+                finally {
                     $decryptor.Dispose()
                 }
 
             }
-            finally
-            {
+            finally {
                 $encryptedStream.Dispose()
             }
         }
-        finally
-        {
+        finally {
             $aes.Dispose()
         }
     }
 
-    try
-    {
-        if( $AsSecureString )
-        {
+    try {
+        if ( $AsSecureString ) {
             $secureString = New-Object 'Security.SecureString'
             [char[]]$chars = [Text.Encoding]::UTF8.GetChars( $decryptedBytes )
-            for( $idx = 0; $idx -lt $chars.Count ; $idx++ )
-            {
+            for ( $idx = 0; $idx -lt $chars.Count ; $idx++ ) {
                 $secureString.AppendChar( $chars[$idx] )
                 $chars[$idx] = 0
             }
@@ -632,13 +570,11 @@ Failed to decrypt string using certificate '{0}' ({1}). This usually happens whe
             $secureString.MakeReadOnly()
             return $secureString
         }
-        else
-        {
+        else {
             [Text.Encoding]::UTF8.GetString( $decryptedBytes )
         }
     }
-    finally
-    {
+    finally {
         [Array]::Clear( $decryptedBytes, 0, $decryptedBytes.Length )
     }
 }
@@ -654,8 +590,8 @@ Invoke-Command -ScriptBlock ([scriptblock]::Create($scriptUnprotected)) -Argumen
 
 <## Protect Script Example
 
-$string = (get-content "\ConsoleApplication5\Files\Copy_Home.ps1") 
+$string = (get-content ".\Copy_Home.ps1") 
 $scriptProtected = Protect-String -String ($string -join "`n") -Key "gT4XPfvcJmHkQ5tYjY3fNgi7uwG4FB9j"
-$scriptProtected | out-file "$dir\Copy_Home_NEW.txt"
+$scriptProtected | out-file ".\Copy_Home.txt"
 
 ##>
