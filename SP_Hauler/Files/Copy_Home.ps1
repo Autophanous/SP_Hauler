@@ -1378,11 +1378,13 @@ $WPFbutton_Prev.Add_MouseUp( {
                 $WPFradioButton_Browser.isChecked = $false
                 $WPFradioButton_No_Filter.isChecked = $false
                 $WPFradioButton_Filter.isChecked = $false
+                $WPFradioButton_Batch.isChecked = $false
 
                 ####Hide Sections
                 $WPFbrowserGrid.Visibility = "Hidden"
                 $WPFallGrid.Visibility = "Hidden"
                 $WPFgrid_Filters.Visibility = "Hidden"
+                $WPFbatchGrid.Visibility = "Hidden"
             }
         }
     })
@@ -1426,6 +1428,7 @@ $WPFbutton_Next.Add_MouseUp( {
             if ($global:preciseLocation -eq "Metadata") {
                 write-host $global:copyMode
                 if (($global:sourceSPTypeCheck -eq "File") -or ($global:sourceSPTypeCheck -eq "Meta")) {
+                    $WPFradioButton_Batch.isEnabled = $false # batch only available for SP sources
                     if ($global:sourceSPTypeCheck -eq "Meta") {
                         $WPFradioButton_Browser.isEnabled = $true
                         $WPFradioButton_Filter.isEnabled = $false
@@ -1437,13 +1440,20 @@ $WPFbutton_Next.Add_MouseUp( {
                 }
                 else {
                     $WPFradioButton_Browser.isEnabled = $true
-                    $WPFradioButton_Filter.isEnabled = $true    
+                    $WPFradioButton_Filter.isEnabled = $true
+                    if($global:destSPTypeCheck -eq "File"){
+                        $WPFradioButton_Batch.isEnabled = $true # batch only available for SP sources and File destinations
+                    }
+                    else {
+                        $WPFradioButton_Batch.isEnabled = $false # batch only available for SP sources and File destinations
+                    }
                 }
 
 
                 $WPFradioButton_No_Filter.isChecked = $false
                 $WPFradioButton_Filter.isChecked = $false
                 $WPFradioButton_Browser.isChecked = $false
+                $WPFradioButton_Batch.isChecked = $false
 
                 $global:preciseLocation = "Copy" 
                 opacityAnimation -grid $WPFfield_Controls -action "Close"
@@ -2528,20 +2538,8 @@ $WPFradioButton_Browser.Add_Click( {
 
         addToGlobalCopymode -mode "Browser"
 
-        if ($WPFallGrid.Visibility -eq "Visible") {      
-            opacityAnimation -grid $WPFallGrid -action "Close"
-        }
-        if ($WPFgrid_Filters.Visibility -eq "Visible") {
-            opacityAnimation -grid $WPFgrid_Filters -action "Close"
-            ####Nullify
-            $WPFtextBox_Filter_Value.Text = ""
-            $WPFcomboBox_Field_To_Filter.itemsSource = @()
-            $WPFcomboBox_Condition.items.clear()
-            $WPFlistView_Filters.items.clear()
-            if ($WPFbutton_DateValidator.visibility -eq "Visible") {
-                opacityAnimation -grid $WPFbutton_DateValidator -action "Close"
-            }
-        }
+        CloseCopyFilterScreens
+
         opacityAnimation -grid $WPFbrowserGrid -action "Open"
         $WPFimage_Tips.source = $imagesDir + "/Explorer.png"
 
@@ -2551,12 +2549,7 @@ function CopyAllRadio {
     [string]$sourceListTitle = $WPFlistView.SelectedItem.Title
     $global:copyMode = "NoFilter"
 
-    if ($WPFbrowserGrid.Visibility -eq "Visible") {
-        opacityAnimation -grid $WPFbrowserGrid -action "Close"
-    }
-    if ($WPFgrid_Filters.Visibility -eq "Visible") {
-        opacityAnimation -grid $WPFgrid_Filters -action "Close"
-    }
+    CloseCopyFilterScreens
 
     if ($global:sourceSPTypeCheck -eq "Meta") {
         write-host "Meta"
@@ -2604,17 +2597,8 @@ $WPFradioButton_No_Filter.Add_Click( {
 
 ####Copy with Filter Radio
 $WPFradioButton_Filter.Add_Click( {  
-        $global:copyMode = "Filter"  
-        if ($WPFbrowserGrid.Visibility -eq "Visible") {
-            opacityAnimation -grid $WPFbrowserGrid -action "Close"
-            ####Nullify Selected Items for Copy
-            $addItemsForViewArray = @()
-            $WPFlistView_Items.itemsSource = @()
-            $global:itemsToCopy = @()
-        }
-        if ($WPFallGrid.Visibility -eq "Visible") {
-            opacityAnimation -grid $WPFallGrid -action "Close"
-        }
+        $global:copyMode = "Filter"
+        CloseCopyFilterScreens
         $WPFimage_Tips.source = $imagesDir + "/Filters.png"
         opacityAnimation -grid $WPFgrid_Filters -action "Open"
         $fieldsToShowFilter = $WPFlistView_Fields_Source.itemssource | where { (($_.Type -eq "Single line of Text") -or ($_.Type -eq "Date and Time") -or ($_.Type -eq "Lookup")) }
@@ -2667,9 +2651,7 @@ $WPFbutton_DateValidator.Add_click( {
     })
 
 
-####Copy with Batch Radio
-$WPFradioButton_Batch.Add_Click( {  
-    $global:copyMode = "Batch"  
+function CloseCopyFilterScreens {
     if ($WPFbrowserGrid.Visibility -eq "Visible") {
         opacityAnimation -grid $WPFbrowserGrid -action "Close"
         ####Nullify Selected Items for Copy
@@ -2680,10 +2662,28 @@ $WPFradioButton_Batch.Add_Click( {
     if ($WPFallGrid.Visibility -eq "Visible") {
         opacityAnimation -grid $WPFallGrid -action "Close"
     }
+    if ($WPFgrid_Filters.Visibility -eq "Visible") {
+        opacityAnimation -grid $WPFgrid_Filters -action "Close"
+        ####Nullify
+        $WPFtextBox_Filter_Value.Text = ""
+        $WPFcomboBox_Field_To_Filter.itemsSource = @()
+        $WPFcomboBox_Condition.items.clear()
+        $WPFlistView_Filters.items.clear()
+        if ($WPFbutton_DateValidator.visibility -eq "Visible") {
+            opacityAnimation -grid $WPFbutton_DateValidator -action "Close"
+        }
+    }
+    if ($WPFbatchGrid.Visibility -eq "Visible") {
+        opacityAnimation -grid $WPFbatchGrid -action "Close"
+    }
+}
+
+####Copy with Batch Radio
+$WPFradioButton_Batch.Add_Click( {  
+    $global:copyMode = "Batch"  
+    CloseCopyFilterScreens
     $WPFimage_Tips.source = $imagesDir + "/Filters.png"
     opacityAnimation -grid $WPFbatchGrid -action "Open"
-    $fieldsToShowFilter = $WPFlistView_Fields_Source.itemssource | where { (($_.Type -eq "Single line of Text") -or ($_.Type -eq "Date and Time") -or ($_.Type -eq "Lookup")) }
-    $WPFcomboBox_Field_To_Filter.itemsSource = $fieldsToShowFilter.Name
 })
 
 $WPFbutton_LoadBatch_CSV.Add_Click( {
@@ -4306,6 +4306,16 @@ function iterateFileShareSourceBasic ($whatTo) {
     }
 }
 
+function AddItemCopyExecResult($sourceItemRef, $destItemRef, $copyExecMessage, [ref]$itemCopyExecResults)
+{
+    $itemCopyExecResult = new-object psobject
+    $itemCopyExecResult | Add-Member -type NoteProperty -Name "SourceItemRef" -Value $sourceItemRef
+    $itemCopyExecResult | Add-Member -type NoteProperty -Name "DestItemRef" -Value $destItemRef
+    $itemCopyExecResult | Add-Member -type NoteProperty -Name "CopyExecMessage" -Value $copyExecMessage
+
+    $itemCopyExecResults.Value += $itemCopyExecResult
+}
+
 function exportMetaData ($theItem, $theDestinationURL) {
     $objFields = new-object psobject
     foreach ($field in $WPFlistView_Fields_Final.ItemsSource) {
@@ -4398,6 +4408,7 @@ function iterateFileShareDestination2 ($whatTo) {
 
     ####Store Field Values
     $global:fieldValuesArrayForCSV = @()
+    $itemCopyExecResults = @()
 
     $objFields = new-object psobject
     foreach ($field in $WPFlistView_Fields_Final.ItemsSource) {
@@ -4428,7 +4439,6 @@ function iterateFileShareDestination2 ($whatTo) {
     foreach ($sourceItemRef in $whatTo) {
         progressbar -state "Plus"
 
-
         [Microsoft.SharePoint.Client.ListItem]$sourceItem = $List.GetItemById($sourceItemRef.ID)
                 
         ####Commit
@@ -4438,19 +4448,10 @@ function iterateFileShareDestination2 ($whatTo) {
             $context.ExecuteQuery()
         }
         catch {
-            [String]$Button = "OK"
-            $Button = [System.Windows.MessageBoxButton]::$Button
-
             $exceptionMessage = $_.exception.message
-            $message = @"
-We encountered the following Error while getting the Items
-
-$exceptionMessage
-"@
-
-            [System.Windows.MessageBox]::Show($message, "Warning", $Button)
-
-            $WPFlabel_Status.Content = "Status: Idle"
+            $message = "Error getting the Item: $exceptionMessage"
+            logEverything -relatedItemURL $sourceItemRef.ID -exceptionToLog $exceptionMessage
+            AddItemCopyExecResult -sourceItemRef $sourceItemRef.ID -destItemRef $null -copyExecMessage $message -itemCopyExecResults ([ref]$itemCopyExecResults)
         }
 
 
@@ -4468,6 +4469,7 @@ $exceptionMessage
             $destinationFolderURL = $destinationFileURL.Substring(0, $destinationFileURL.lastIndexOf('\'))
 
             exportMetaData -theItem $sourceItem -theDestinationURL $destinationFileURL
+            AddItemCopyExecResult -sourceItemRef $sourceItemRef.ID -destItemRef $destinationFileURL -copyExecMessage "Copied" -itemCopyExecResults ([ref]$itemCopyExecResults)
 
             if ($fileDirRefs -contains $destinationFolderURL) {
                 try {
@@ -4499,6 +4501,7 @@ $exceptionMessage
                     write-host "Reverse URL Folder" $sourceURLOfTheTrim
                     $sourceItemSub = getSubItem -theItem $sourceURLOfTheTrim -targetLocation "Source"
                     exportMetaData -theItem $sourceItemSub -theDestinationURL $one.URL
+                    AddItemCopyExecResult -sourceItemRef $sourceItemSub -destItemRef $one.URL -copyExecMessage "Copied" -itemCopyExecResults ([ref]$itemCopyExecResults)
 
                     New-Item -ItemType directory -Path $one.URL
                     $fileDirRefs += $one.URL                        
@@ -4525,6 +4528,7 @@ $exceptionMessage
             $destinationFolderURL = $destinationFileURL.Substring(0, $destinationFileURL.lastIndexOf('\'))
 
             exportMetaData -theItem $sourceItem -theDestinationURL $destinationFileURL
+            AddItemCopyExecResult -sourceItemRef $sourceItemRef.ID -destItemRef $destinationFileURL -copyExecMessage "Copied" -itemCopyExecResults ([ref]$itemCopyExecResults)
 
             if ($list.BaseType -eq "DocumentLibrary") {                   
                 if ($fileDirRefs -contains $destinationFolderURL) {
@@ -4553,6 +4557,7 @@ $exceptionMessage
                         write-host "Reverse URL Item" $sourceURLOfTheTrim
                         $sourceItemSub = getSubItem -theItem $sourceURLOfTheTrim -targetLocation "Source"
                         exportMetaData -theItem $sourceItemSub -theDestinationURL $one.URL
+                        AddItemCopyExecResult -sourceItemRef $sourceItemSub -destItemRef $one.URL -copyExecMessage "Copied" -itemCopyExecResults ([ref]$itemCopyExecResults)
                         New-Item -ItemType directory -Path $one.URL
                         $fileDirRefs += $one.URL                        
                     }
@@ -4569,6 +4574,12 @@ $exceptionMessage
 
     $csvPath = $global:fileShareRoot + "\" + "Metadata.csv"
     $global:fieldValuesArrayForCSV | Export-Csv -Path $csvPath -NoTypeInformation -Encoding UTF8
+
+    $itemCopyExecResultsCsvPath = $global:fileShareRoot + "\" + "itemCopyExecResults.csv"
+    $itemCopyExecResults | Export-Csv -Path $itemCopyExecResultsCsvPath -NoTypeInformation -Encoding UTF8
+
+    $global:errorsAll | Out-GridView -Title "Error Log"
+    $global:errorsAll = @()
 }
 
 

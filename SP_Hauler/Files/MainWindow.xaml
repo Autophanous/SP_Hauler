@@ -197,27 +197,9 @@
 
             </Grid>
             <Grid x:Name="batchGrid" Margin="48,50,-20,74" Visibility="Hidden">
-                <ListView x:Name="listView_batch" HorizontalAlignment="Left" Height="423" Margin="0,27,0,0" VerticalAlignment="Top" Width="807">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="Name" Width="Auto">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Image Source="{Binding ImagePath}"/>
-                                            <TextBlock Text="{Binding Name}"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Path" DisplayMemberBinding ="{Binding Path}" Width="auto"/>
-                            <GridViewColumn Header="Type" DisplayMemberBinding ="{Binding Type}" Width="auto"/>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-                <Label x:Name="batchLabel" Content="Contents that will be copied" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="15" FontWeight="Bold" Margin="-4,-5,0,0"/>
-                <Label x:Name="label_LoadBatch_Status" Content="" HorizontalAlignment="Left" Margin="75,454,0,0" VerticalAlignment="Top" Width="234"/>
-                <Button x:Name="button_LoadBatch_CSV" Content="Load Batch CSV" HorizontalAlignment="Left" Margin="75,427,0,0" VerticalAlignment="Top" Width="234"/>
+                <Label x:Name="batchLabel" Content="Load Batch: " HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="15" FontWeight="Bold" Margin="0,0,0,0"/>
+                <Button x:Name="button_LoadBatch_CSV" Content="Load Batch CSV" HorizontalAlignment="Left" Margin="310,49,0,0" VerticalAlignment="Top" Width="234"/>
+                <Label x:Name="label_LoadBatch_Status" Content="" HorizontalAlignment="Left" Margin="310,65,0,0" VerticalAlignment="Top" Width="234"/>
             </Grid>
             <Grid x:Name="allGrid" Margin="48,50,-20,74" Visibility="Hidden">
                 <ListView x:Name="listView_all" HorizontalAlignment="Left" Height="423" Margin="0,27,0,0" VerticalAlignment="Top" Width="807">
