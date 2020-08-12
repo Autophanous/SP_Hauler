@@ -199,7 +199,8 @@
             <Grid x:Name="batchGrid" Margin="48,50,-20,74" Visibility="Hidden">
                 <Label x:Name="batchLabel" Content="Load Batch: " HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="15" FontWeight="Bold" Margin="0,0,0,0"/>
                 <Button x:Name="button_LoadBatch_CSV" Content="Load Batch CSV" HorizontalAlignment="Left" Margin="310,49,0,0" VerticalAlignment="Top" Width="234"/>
-                <Label x:Name="label_LoadBatch_Status" Content="" HorizontalAlignment="Left" Margin="310,65,0,0" VerticalAlignment="Top" Width="234"/>
+                <CheckBox x:Name="checkBox_LoadBatch" Content="Switch Name to ID" HorizontalAlignment="Left" Margin="306,75,0,0" VerticalAlignment="Top" Width="234" RenderTransformOrigin="0.743,5.125"/>
+                <Label x:Name="label_LoadBatch_Status" Content="" HorizontalAlignment="Left" Margin="310,95,0,0" VerticalAlignment="Top" Width="234"/>
             </Grid>
             <Grid x:Name="allGrid" Margin="48,50,-20,74" Visibility="Hidden">
                 <ListView x:Name="listView_all" HorizontalAlignment="Left" Height="423" Margin="0,27,0,0" VerticalAlignment="Top" Width="807">

@@ -1441,7 +1441,7 @@ $WPFbutton_Next.Add_MouseUp( {
                 else {
                     $WPFradioButton_Browser.isEnabled = $true
                     $WPFradioButton_Filter.isEnabled = $true
-                    if($global:destSPTypeCheck -eq "File"){
+                    if ($global:destSPTypeCheck -eq "File") {
                         $WPFradioButton_Batch.isEnabled = $true # batch only available for SP sources and File destinations
                     }
                     else {
@@ -2680,11 +2680,11 @@ function CloseCopyFilterScreens {
 
 ####Copy with Batch Radio
 $WPFradioButton_Batch.Add_Click( {  
-    $global:copyMode = "Batch"  
-    CloseCopyFilterScreens
-    $WPFimage_Tips.source = $imagesDir + "/Filters.png"
-    opacityAnimation -grid $WPFbatchGrid -action "Open"
-})
+        $global:copyMode = "Batch"  
+        CloseCopyFilterScreens
+        $WPFimage_Tips.source = $imagesDir + "/Filters.png"
+        opacityAnimation -grid $WPFbatchGrid -action "Open"
+    })
 
 $WPFbutton_LoadBatch_CSV.Add_Click( {
         $global:batchData = @()
@@ -2793,8 +2793,7 @@ function createCAMLFilter_Old {
     return $camlQueryConstruct
 }
 
-function createCAMLFilter
-{
+function createCAMLFilter {
     $fragments = @()
     foreach ($filter in $WPFlistView_Filters.items) {
         $filterObj = 
@@ -2802,7 +2801,7 @@ function createCAMLFilter
             Predicate = @"
 <{0}><FieldRef Name='{1}' /><Value Type='{2}'>{3}</Value></{0}>
 "@ -f $filter.Condition, $filter.Field, $filter.Type, $filter.Value
-            LogicOp = $filter.LogicOp
+            LogicOp   = $filter.LogicOp
         }
 
         $fragments += $filterObj
@@ -2824,20 +2823,17 @@ function createCAMLFilter
 }
 
 # Define method for nesting caml query statements
-function GetNestedCaml([array]$fragments)
-{
-    if ($fragments.Length -lt 1)
-    {
+function GetNestedCaml([array]$fragments) {
+    if ($fragments.Length -lt 1) {
         return [string]::Empty
     }
-    elseif ($fragments.length -eq 1)
-    {
+    elseif ($fragments.length -eq 1) {
         return $fragments[0].Predicate
     }
 
     $logicOp = $fragments[0].LogicOp # get logic operator from first filter
     $predicate1 = $fragments[0].Predicate
-    $predicate2 = If ($fragments.length -eq 2) {$fragments[1].Predicate} Else {(GetNestedCaml ($fragments | Select-Object -Skip 1))}
+    $predicate2 = If ($fragments.length -eq 2) { $fragments[1].Predicate } Else { (GetNestedCaml ($fragments | Select-Object -Skip 1)) }
     return "<$logicOp>" + $predicate1 + $predicate2 + "</$logicOp>"
 }
 
@@ -2891,42 +2887,42 @@ $exceptionMessage
 
 $WPFbutton_AddFilter.Add_Click( {
         #if ($WPFlistView_Filters.items.count -lt 3) {
-            write-host $WPFlistView_Filters.items.count
-            $obj = new-object psobject -Property @{
-                'Field'     = $global:comboSelection.Name
-                'Condition' = ""
-                'Value'     = $WPFtextBox_Filter_Value.Text
-                'Type'      = ""
-                'LogicOp'      = "And"
-            }
+        write-host $WPFlistView_Filters.items.count
+        $obj = new-object psobject -Property @{
+            'Field'     = $global:comboSelection.Name
+            'Condition' = ""
+            'Value'     = $WPFtextBox_Filter_Value.Text
+            'Type'      = ""
+            'LogicOp'   = "And"
+        }
 
-            if ($WPFcomboBox_Condition.SelectedValue -eq "Equal") {
-                $obj.Condition = "Eq"
-            }
-            if ($WPFcomboBox_Condition.SelectedValue -eq "Greater") {
-                $obj.Condition = "Gt"
-            }
-            if ($WPFcomboBox_Condition.SelectedValue -eq "Lesser") {
-                $obj.Condition = "Lt"
-            }
-            if ($global:comboSelection.Type -eq "Single line of Text") {
-                $obj.Type = "Text"
-            }
-            if ($global:comboSelection.Type -eq "Lookup") {
-                $obj.Type = "Lookup"
-            }
-            if ($global:comboSelection.Type -eq "Date and Time") {
-                $obj.Type = "Datetime"
-            }
+        if ($WPFcomboBox_Condition.SelectedValue -eq "Equal") {
+            $obj.Condition = "Eq"
+        }
+        if ($WPFcomboBox_Condition.SelectedValue -eq "Greater") {
+            $obj.Condition = "Gt"
+        }
+        if ($WPFcomboBox_Condition.SelectedValue -eq "Lesser") {
+            $obj.Condition = "Lt"
+        }
+        if ($global:comboSelection.Type -eq "Single line of Text") {
+            $obj.Type = "Text"
+        }
+        if ($global:comboSelection.Type -eq "Lookup") {
+            $obj.Type = "Lookup"
+        }
+        if ($global:comboSelection.Type -eq "Date and Time") {
+            $obj.Type = "Datetime"
+        }
 
-            if (($obj.Field) -and ($obj.Value) -and ($obj.Condition)) {
-                $WPFlistView_Filters.items.add($obj)
-            }
-            else {
-                [String]$Button = "OK"
-                $Button = [System.Windows.MessageBoxButton]::$Button
-                [System.Windows.MessageBox]::Show("Not all fields are filled.", "Warning", $Button)
-            }
+        if (($obj.Field) -and ($obj.Value) -and ($obj.Condition)) {
+            $WPFlistView_Filters.items.add($obj)
+        }
+        else {
+            [String]$Button = "OK"
+            $Button = [System.Windows.MessageBoxButton]::$Button
+            [System.Windows.MessageBox]::Show("Not all fields are filled.", "Warning", $Button)
+        }
         # }
         # else {
         #     #try {[System.Windows.Window]} 
@@ -4306,8 +4302,7 @@ function iterateFileShareSourceBasic ($whatTo) {
     }
 }
 
-function AddItemCopyExecResult($sourceItemRef, $destItemRef, $copyExecMessage, [ref]$itemCopyExecResults)
-{
+function AddItemCopyExecResult($sourceItemRef, $destItemRef, $copyExecMessage, [ref]$itemCopyExecResults) {
     $itemCopyExecResult = new-object psobject
     $itemCopyExecResult | Add-Member -type NoteProperty -Name "SourceItemRef" -Value $sourceItemRef
     $itemCopyExecResult | Add-Member -type NoteProperty -Name "DestItemRef" -Value $destItemRef
@@ -4524,8 +4519,16 @@ function iterateFileShareDestination2 ($whatTo) {
  
             $destinationFileURL = $sourceItem["FileRef"] -replace $listRelativeURL, $global:fileShareRoot
             $destinationFileURL = $destinationFileURL -replace "/", "\"
-
+            
             $destinationFolderURL = $destinationFileURL.Substring(0, $destinationFileURL.lastIndexOf('\'))
+
+            if($WPFcheckBox_LoadBatch.IsChecked){
+                $fileName = $sourceItem["FileLeafRef"].ToString()
+                $fileExtensionPos = $fileName.LastIndexOf(".")
+                $fileExtension = $fileName.Substring($fileExtensionPos)
+                $fileNewName = [string]::Format("{0}{1}", $sourceItem["ID"], $fileExtension)
+                $destinationFileURL = $destinationFileURL.Replace($fileName, $fileNewName)
+            }
 
             exportMetaData -theItem $sourceItem -theDestinationURL $destinationFileURL
             AddItemCopyExecResult -sourceItemRef $sourceItemRef.ID -destItemRef $destinationFileURL -copyExecMessage "Copied" -itemCopyExecResults ([ref]$itemCopyExecResults)
